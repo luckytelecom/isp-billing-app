@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers - ISP Billing System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-wifi"></i> ISP Billing</h2>
+                <p>Administrator Panel</p>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li class="active"><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
+                <li><a href="billing.html"><i class="fas fa-file-invoice-dollar"></i> Billing</a></li>
+                <li><a href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-details">
+                        <p class="user-name" id="user-name">Admin User</p>
+                        <p class="user-role">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Customer Management</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-customer-btn">
+                        <i class="fas fa-user-plus"></i> Add New Customer
+                    </button>
+                    <button class="btn btn-secondary" id="export-customers-btn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Customer Filters -->
+            <div class="filters-section">
+                <div class="filter-group">
+                    <input type="text" id="search-customers" placeholder="Search customers..." class="filter-input">
+                    <select id="filter-status" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <select id="filter-package" class="filter-select">
+                        <option value="">All Packages</option>
+                        <option value="10 Mbps">10 Mbps</option>
+                        <option value="20 Mbps">20 Mbps</option>
+                        <option value="30 Mbps">30 Mbps</option>
+                        <option value="50 Mbps">50 Mbps</option>
+                        <option value="100 Mbps">100 Mbps</option>
+                    </select>
+                    <button class="btn btn-secondary" id="clear-filters-btn">Clear Filters</button>
+                </div>
+            </div>
+            
+            <!-- Customers Table -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Package</th>
+                            <th>Monthly Fee</th>
+                            <th>Status</th>
+                            <th>Join Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-table-body">
+                        <!-- Customers will be loaded here -->
+                        <tr>
+                            <td colspan="8" class="loading">Loading customers...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="pagination-btn" id="prev-page" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <span id="page-info">Page 1 of 1</span>
+                <button class="pagination-btn" id="next-page" disabled>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Add Customer Modal -->
+    <div id="customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Customer</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="customer-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customer-name">Full Name *</label>
+                            <input type="text" id="customer-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer-email">Email Address *</label>
+                            <input type="email" id="customer-email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customer-phone">Phone Number *</label>
+                            <input type="tel" id="customer-phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer-nid">NID Number</label>
+                            <input type="text" id="customer-nid">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer-address">Address *</label>
+                        <textarea id="customer-address" rows="2" required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customer-package">Internet Package *</label>
+                            <select id="customer-package" required>
+                                <option value="">Select Package</option>
+                                <option value="10 Mbps">10 Mbps - ৳800/month</option>
+                                <option value="20 Mbps">20 Mbps - ৳1,200/month</option>
+                                <option value="30 Mbps">30 Mbps - ৳1,500/month</option>
+                                <option value="50 Mbps">50 Mbps - ৳2,000/month</option>
+                                <option value="100 Mbps">100 Mbps - ৳3,500/month</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer-monthly-fee">Monthly Fee (৳) *</label>
+                            <input type="number" id="customer-monthly-fee" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customer-connection-date">Connection Date *</label>
+                            <input type="date" id="customer-connection-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer-status">Status *</label>
+                            <select id="customer-status" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer-notes">Additional Notes</label>
+                        <textarea id="customer-notes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="save-customer-btn">
+                            Save Customer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/customers.js"></script>
+    
+    <script>
+        // Initialize customers page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            checkAuth();
+            
+            // Load customers
+            loadCustomers();
+            
+            // Logout button
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                logoutUser();
+            });
+            
+            // Add customer button
+            document.getElementById('add-customer-btn').addEventListener('click', function() {
+                openCustomerModal();
+            });
+            
+            // Modal close buttons
+            document.querySelectorAll('.close-modal').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.getElementById('customer-modal').style.display = 'none';
+                });
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('customer-modal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
