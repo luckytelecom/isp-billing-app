@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ISP Billing System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-wifi"></i> ISP Billing</h2>
+                <p>Administrator Panel</p>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="active"><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
+                <li><a href="billing.html"><i class="fas fa-file-invoice-dollar"></i> Billing</a></li>
+                <li><a href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-details">
+                        <p class="user-name" id="user-name">Admin User</p>
+                        <p class="user-role">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Dashboard Overview</h1>
+                <div class="header-actions">
+                    <div class="date-display">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="current-date">Loading...</span>
+                    </div>
+                    <button class="btn btn-primary btn-small" id="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #4CAF50;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-customers">0</h3>
+                        <p>Total Customers</p>
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-up">+12%</span> from last month
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #2196F3;">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="pending-invoices">0</h3>
+                        <p>Pending Invoices</p>
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-down">-5%</span> from last month
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #FF9800;">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="monthly-revenue">৳0</h3>
+                        <p>Monthly Revenue</p>
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-up">+18%</span> from last month
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #9C27B0;">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="collection-rate">0%</h3>
+                        <p>Collection Rate</p>
+                    </div>
+                    <div class="stat-trend">
+                        <span class="trend-up">+2%</span> from last month
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts and Recent Activity -->
+            <div class="dashboard-content">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Monthly Revenue Trend</h3>
+                        <select id="chart-period">
+                            <option value="6">Last 6 Months</option>
+                            <option value="12" selected>Last 12 Months</option>
+                            <option value="24">Last 2 Years</option>
+                        </select>
+                    </div>
+                    <canvas id="revenue-chart"></canvas>
+                </div>
+                
+                <div class="recent-activity">
+                    <div class="activity-header">
+                        <h3>Recent Payments</h3>
+                        <a href="billing.html" class="view-all">View All</a>
+                    </div>
+                    <div class="activity-list" id="recent-payments">
+                        <!-- Recent payments will be loaded here -->
+                        <div class="loading">Loading recent payments...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="action-buttons">
+                    <a href="customers.html?action=add" class="action-btn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add New Customer</span>
+                    </a>
+                    <a href="billing.html?action=generate" class="action-btn">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Generate Invoices</span>
+                    </a>
+                    <a href="reports.html" class="action-btn">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>View Reports</span>
+                    </a>
+                    <a href="#" class="action-btn">
+                        <i class="fas fa-bell"></i>
+                        <span>Send Reminders</span>
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    
+    <script>
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            checkAuth();
+            
+            // Set current date
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+            
+            // Initialize dashboard data
+            initDashboard();
+            
+            // Logout button
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                logoutUser();
+            });
+            
+            // Refresh button
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                initDashboard();
+            });
+        });
+    </script>
+</body>
+</html>
