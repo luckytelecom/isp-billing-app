@@ -240,5 +240,46 @@
             });
         });
     </script>
+    // প্রথম কাস্টমার যোগ করার ফাংশন
+async function addFirstCustomer() {
+    try {
+        // Firebase database reference
+        const db = firebase.firestore();
+        
+        // প্রথম কাস্টমারের তথ্য
+        const customerData = {
+            name: "Rahim",
+            phone: "01712345678",
+            address: "Dhaka",
+            package: "20 Mbps",
+            monthlyFee: 1500,
+            status: "active",
+            connectionDate: "2024-01-01",
+            createdAt: new Date()
+        };
+        
+        // Database-এ যোগ করুন
+        const result = await db.collection('customers').add(customerData);
+        
+        alert("কাস্টমার সফলভাবে যোগ হয়েছে! ID: " + result.id);
+        console.log("কাস্টমার যোগ হয়েছে:", result.id);
+        
+    } catch (error) {
+        console.error("এরর হয়েছে:", error);
+        alert("দুঃখিত, সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+    }
+}
+
+// এই ফাংশন কল করতে একটি বাটন যোগ করুন
+document.addEventListener('DOMContentLoaded', function() {
+    // একটি বাটন তৈরি করুন
+    const button = document.createElement('button');
+    button.textContent = "প্রথম কাস্টমার যোগ করুন";
+    button.className = "btn btn-primary";
+    button.onclick = addFirstCustomer;
+    
+    // পেজে বাটন যোগ করুন
+    document.body.appendChild(button);
+});
 </body>
 </html>
